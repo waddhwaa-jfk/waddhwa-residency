@@ -1,0 +1,49 @@
+name: Publish Wadhwa Residency - September 2026 Archive
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/wadhwa-recovery-pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: wadhwa-website-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Download website recovery archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --max-time 180 --output site.zip "https://d2ol7oe51mr4n9.cloudfront.net/user_3I7L3ahzFwdNbVIIgPwAPuRuvTc/91d4b71c-48e1-47b1-8ac4-03aa281c91b3.zip"
+          echo "9a48b33a7b87c53c82e82216134ffbd6b398fba205660081e4474d1c67cdb44b  site.zip" | sha256sum --check
+          mkdir site
+          unzip -q site.zip -d site
+          test -s site/index.html
+          test -s site/assets/wadhwa-authentic-logo.png
+          echo "Successfully prepared 22 September archive candidate"
+
+      - name: Set up GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload static site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+      - name: Deploy on GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
